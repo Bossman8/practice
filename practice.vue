@@ -136,7 +136,32 @@
             </multiselect>
           </div>
         </div>
-        <div class="row kt-padding-10">
+       <div class="row kt-padding-10" v-if="!record.id">
+          <div class="col-6">
+            <label>Treatment Type:</label>
+
+              <multiselect
+              :disabled="record.id"
+              v-model="treatment"
+              :multiple="false"
+              :options="treatment_options"
+              label="title"
+              >
+              </multiselect>
+
+          </div>
+          <div class="col-6">
+            <label>Subjective, Chief complaint(*):</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Subjective, Chief complaint"
+              required
+              v-model="record.subjective"
+            />
+          </div>
+        </div>
+        <div class="row kt-padding-10" v-else>
           <div class="col-12">
             <label>Subjective, Chief complaint(*):</label>
             <input
@@ -530,26 +555,21 @@ import RoutableModalMixin from "../../mixins/RoutableModalMixin";
 import InlineConfirm from "../../libs/InlineConfirm";
 import VueDatetimepicker from "../../libs/VueDatetimepicker";
 import VueFeetInchInput from "../../libs/VueFeetInchInput";
-import {DEFAULT_CKEDITOR_TOOLBAR, MEDICAL_TREATMENT_SPECIALTY_OPTIONS} from "../../../Constants";
+import {DEFAULT_CKEDITOR_TOOLBAR, MEDICAL_TREATMENT_SPECIALTY_OPTIONS, MEDICAL_TREATMENT_TYPE} from "../../../Constants";
 import VueCkeditor2 from "../../libs/VueCkeditor2";
 
 const moment = window.moment;
 
-const AUTO_FILLED_NOTE = [
-  { title: 'Three Day Follow-Up', value: 'Three Day'},
-  { title: 'Injury Assessment Form', value: 'Injury' },
-  { title: 'Intervention Assessment Form', 
-    value: 
-    `<p><strong>Subjective continue:</strong></p>
-    <p></p>
-    <p><strong>Objective: </strong></p>
-    <p></p>
-    <p><strong>Assesment/Diagnosis:</strong></p>
-    <p></p>
-    <p><strong>Plan:</strong></p>
-    <p></p>`
-  }
-]
+const AUTO_FILLED_NOTE = `
+<p><strong>Subjective continue:</strong></p>
+<p></p>
+<p><strong>Objective: </strong></p>
+<p></p>
+<p><strong>Assesment/Diagnosis:</strong></p>
+<p></p>
+<p><strong>Plan:</strong></p>
+<p></p>
+`;
 export default {
   mixins: [UtilMixin, RoutableModalMixin],
   components: {
@@ -582,12 +602,26 @@ export default {
       chosenFiles: [],
       chosenPhotos: [],
       loadingContacts: false,
+      treatment: null,
+      treatment_options: MEDICAL_TREATMENT_TYPE,
       specialtyOptions: MEDICAL_TREATMENT_SPECIALTY_OPTIONS,
       ckeditorConfig: {
         toolbar: DEFAULT_CKEDITOR_TOOLBAR,
         height: 200
       }
     };
+  },
+  watch: {
+    treatment(val){
+      if(val != null){
+      this.record.note = val.value
+      this.record.treatment_type = val.title
+      }
+      else{
+        this.record.note = AUTO_FILLED_NOTE;
+      }
+      
+    }
   },
   methods: {
     clearChosenFile: function() {
@@ -688,6 +722,7 @@ export default {
           '<p><span style="color:#95a5a6">Loading ...</span></p>'
         );
       }
+      this.treatment = null;
       this.chosenFiles = [];
       this.chosenPhotos = [];
       this.$refs.modalRef.show();
